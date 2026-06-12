@@ -108,6 +108,9 @@ class LdapQueryArguments(TaskArguments):
                 dn = dn or data["full_path"]
                 if dn.lower().startswith("ldap://"):
                     dn = dn[7:]
+                slash_pos = dn.find("/")
+                if slash_pos >= 0 and "=" not in dn[:slash_pos]:
+                    dn = dn[slash_pos + 1:]
                 if dn == data["full_path"]:
                     dn_pieces = [x.strip() for x in dn.split(",") if x.strip()]
                     host_pieces = [x.strip() for x in data.get("host", "").split(",") if x.strip()]
@@ -173,7 +176,12 @@ class LdapQuery(CommandBase):
         )
         if taskData.args.get_arg("base") == taskData.Callback.Host:
             taskData.args.add_arg("base", "")
-        response.DisplayParams = "-Query {}".format(taskData.args.get_arg("query"))
+        base = taskData.args.get_arg("base") or "(domain root)"
+        query = taskData.args.get_arg("query") or "(objectClass=*)"
+        scope = taskData.args.get_arg("scope") or "subtree"
+        attrs = taskData.args.get_arg("attributes") or []
+        attrs_str = ",".join(attrs) if attrs else "(default)"
+        response.DisplayParams = f"-Base {base} -Query {query} -Scope {scope} -Attributes {attrs_str}"
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

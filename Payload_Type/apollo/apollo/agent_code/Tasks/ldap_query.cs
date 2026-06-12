@@ -312,6 +312,11 @@ namespace Tasks
             {
                 dn = dn.Substring(7);
             }
+            int slashPos = dn.IndexOf('/');
+            if (slashPos >= 0 && !dn.Substring(0, slashPos).Contains('='))
+            {
+                dn = dn.Substring(slashPos + 1);
+            }
             return string.Join(",", dn.Split(',')
                 .Select(piece => piece.Trim())
                 .Where(piece => piece != "")
