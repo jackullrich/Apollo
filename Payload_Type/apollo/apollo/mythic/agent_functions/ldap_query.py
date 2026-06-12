@@ -81,9 +81,11 @@ class LdapQueryArguments(TaskArguments):
         if self.command_line[0] == "{":
             data = json.loads(self.command_line)
             if "full_path" in data:
+                logger.info(f"ldap_query browser click: full_path={data.get('full_path')!r} display_path={data.get('display_path')!r} host={data.get('host')!r} scope={data.get('scope')!r}")
                 metadata = data.get("metadata", {})
                 if isinstance(metadata, list):
                     metadata = {x["Key"]: x["Value"] for x in metadata if "Key" in x and "Value" in x}
+                logger.info(f"ldap_query metadata keys: {list(metadata.keys()) if metadata else '(empty)'}")
                 file_dn = data.get("file", "")
                 file_dn = file_dn.strip().strip('"') if isinstance(file_dn, str) else ""
                 if file_dn.lower().startswith("ldap://"):
@@ -139,6 +141,12 @@ class LdapQueryArguments(TaskArguments):
                     for piece in dn.split(",")
                     if piece.strip()
                 ])
+                rdn = (metadata.get("rdn") or "") if metadata else ""
+                if rdn and "=" in rdn:
+                    rdn_value = rdn.split("=", 1)[1].strip()
+                    dn_parts = [p.strip() for p in dn.split(",") if p.strip()]
+                    dn = ",".join(rdn if p == rdn_value else p for p in dn_parts)
+                logger.info(f"ldap_query resolved base={dn!r}")
                 self.add_arg("base", dn)
                 self.add_arg("query", query)
                 raw_attributes = data["attributes"] if "attributes" in data else ""
