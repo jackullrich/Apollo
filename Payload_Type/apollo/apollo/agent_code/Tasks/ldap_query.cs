@@ -483,7 +483,6 @@ namespace Tasks
 
                         isGroup = classes.Any(x => string.Equals(x, "group", StringComparison.OrdinalIgnoreCase));
                         isContainer = classes.Intersect(containerClasses, StringComparer.OrdinalIgnoreCase).Any();
-                        customBrowserEntry.CanHaveChildren = isGroup || isContainer;
 
                     }
                     customBrowserEntry.Metadata["ldap_type"] = isGroup ? "group" : isContainer ? "container" : "object";
@@ -501,6 +500,7 @@ namespace Tasks
                             members.Add(NormalizeLdapDn(memberValue.ToString()));
                         }
                     }
+                    customBrowserEntry.CanHaveChildren = isContainer || (isGroup && members.Count > 0);
                     if (isGroup && members.Count > 0)
                     {
                         customBrowserEntry.Children = members.Select(memberDn =>
