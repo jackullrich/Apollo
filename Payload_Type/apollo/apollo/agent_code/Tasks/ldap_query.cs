@@ -463,21 +463,7 @@ namespace Tasks
                     customBrowserEntry.DisplayPath = dnString;
                     string[] dnStringPieces = dnString.Split(',');
                     string firstRdn = dnStringPieces[0];
-                    int nameEqualsIndex = firstRdn.IndexOf('=');
-                    string displayName = nameEqualsIndex >= 0
-                        ? firstRdn.Substring(nameEqualsIndex + 1).Trim()
-                        : firstRdn;
-                    foreach (string displayKey in new[] { "cn", "name", "samaccountname" })
-                    {
-                        KeyValuePair<string, object> displayItem = user.FirstOrDefault(item =>
-                            string.Equals(item.Key, displayKey, StringComparison.OrdinalIgnoreCase));
-                        if (!string.IsNullOrEmpty(displayItem.Key) && displayItem.Value != null && !string.IsNullOrEmpty(displayItem.Value.ToString()))
-                        {
-                            displayName = displayItem.Value.ToString();
-                            break;
-                        }
-                    }
-                    customBrowserEntry.Name = displayName;
+                    customBrowserEntry.Name = firstRdn;
                     dnStringPieces = dnStringPieces.Skip(1).Take(dnStringPieces.Length-1).Reverse().ToArray();
                     customBrowserEntry.ParentPath = string.Join(",", dnStringPieces);
                     customBrowserEntry.Metadata = user.ToDictionary(
