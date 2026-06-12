@@ -502,6 +502,7 @@ namespace Tasks
                     }
                     customBrowserEntry.Metadata["ldap_type"] = isGroup ? "group" : isContainer ? "container" : "object";
                     customBrowserEntry.Metadata["rdn"] = firstRdn;
+                    customBrowserEntry.Metadata["ldap_dn"] = dnString;
                     List<string> members = new List<string>();
                     if (user.TryGetValue("member", out object memberValue) && memberValue != null)
                     {

@@ -81,11 +81,11 @@ class LdapQueryArguments(TaskArguments):
         if self.command_line[0] == "{":
             data = json.loads(self.command_line)
             if "full_path" in data:
-                logger.info(f"ldap_query browser click: full_path={data.get('full_path')!r} display_path={data.get('display_path')!r} host={data.get('host')!r} scope={data.get('scope')!r}")
+                logger.info(f"ldap_query browser click raw data: {json.dumps(data, default=str)}")
                 metadata = data.get("metadata", {})
                 if isinstance(metadata, list):
                     metadata = {x["Key"]: x["Value"] for x in metadata if "Key" in x and "Value" in x}
-                logger.info(f"ldap_query metadata keys: {list(metadata.keys()) if metadata else '(empty)'}")
+                logger.info(f"ldap_query metadata: {metadata}")
                 file_dn = data.get("file", "")
                 file_dn = file_dn.strip().strip('"') if isinstance(file_dn, str) else ""
                 if file_dn.lower().startswith("ldap://"):
@@ -102,7 +102,7 @@ class LdapQueryArguments(TaskArguments):
                     pieces = [x.strip() for x in value.split(",") if x.strip()]
                     return len(pieces) > 0 and all("=" in p for p in pieces)
                 display_path = data.get("display_path", "")
-                dn = (display_path if _is_valid_dn(display_path) else None) or metadata.get("target_dn") or metadata.get("distinguishedname") or metadata.get("DistinguishedName")
+                dn = (display_path if _is_valid_dn(display_path) else None) or metadata.get("ldap_dn") or metadata.get("target_dn") or metadata.get("distinguishedname") or metadata.get("DistinguishedName")
                 if not dn and len(file_dn_pieces) > 1 and all("=" in x for x in file_dn_pieces):
                     dn = file_dn
                 if not dn and len(path_remainder_pieces) > 1 and all("=" in x for x in path_remainder_pieces):
