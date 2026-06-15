@@ -516,7 +516,7 @@ namespace Tasks
                             {
                                 Name = memberDisplayName,
                                 DisplayPath = memberDn,
-                                CanHaveChildren = false,
+                                CanHaveChildren = true,
                                 Metadata = new Dictionary<string, object>
                                 {
                                     { "ldap_type", "member_link" },
