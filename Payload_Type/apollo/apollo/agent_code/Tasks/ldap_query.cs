@@ -505,7 +505,7 @@ namespace Tasks
                     customBrowserEntry.CanHaveChildren = isContainer || isGroup;
                     if (isGroup && members.Count > 0)
                     {
-                        customBrowserEntry.Children = members.Select(memberDn =>
+                        customBrowserEntry.Children = members.Take(100).Select(memberDn =>
                         {
                             string memberFirstRdn = memberDn.Split(',')[0];
                             int memberEqualsIndex = memberFirstRdn.IndexOf('=');
