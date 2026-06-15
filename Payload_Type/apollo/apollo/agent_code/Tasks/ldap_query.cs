@@ -489,18 +489,20 @@ namespace Tasks
                     customBrowserEntry.Metadata["rdn"] = firstRdn;
                     customBrowserEntry.Metadata["ldap_dn"] = dnString;
                     List<string> members = new List<string>();
-                    if (user.TryGetValue("member", out object memberValue) && memberValue != null)
+                    foreach (var key in user.Keys)
                     {
-                        if (memberValue is IEnumerable<string> memberValues)
+                        if (key.Equals("member", StringComparison.OrdinalIgnoreCase) ||
+                            key.StartsWith("member;range=", StringComparison.OrdinalIgnoreCase))
                         {
-                            members = memberValues.Select(NormalizeLdapDn).ToList();
-                        }
-                        else
-                        {
-                            members.Add(NormalizeLdapDn(memberValue.ToString()));
+                            object memberValue = user[key];
+                            if (memberValue == null) continue;
+                            if (memberValue is IEnumerable<string> memberValues)
+                                members.AddRange(memberValues.Select(NormalizeLdapDn));
+                            else
+                                members.Add(NormalizeLdapDn(memberValue.ToString()));
                         }
                     }
-                    customBrowserEntry.CanHaveChildren = isContainer || (isGroup && members.Count > 0);
+                    customBrowserEntry.CanHaveChildren = isContainer || isGroup;
                     if (isGroup && members.Count > 0)
                     {
                         customBrowserEntry.Children = members.Select(memberDn =>
