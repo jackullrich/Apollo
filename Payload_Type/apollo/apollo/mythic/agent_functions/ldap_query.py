@@ -121,9 +121,7 @@ class LdapQueryArguments(TaskArguments):
                     lower_reversed_host_pieces = list(reversed(lower_host_pieces))
                     if len(host_pieces) > 0 and lower_dn_pieces[-len(host_pieces):] == lower_host_pieces:
                         dn = ",".join(dn_pieces)
-                    elif len(host_pieces) > 0 and lower_dn_pieces[:len(host_pieces)] == lower_host_pieces:
-                        dn = ",".join(list(reversed(dn_pieces[len(host_pieces):])) + host_pieces)
-                    elif len(host_pieces) > 0 and lower_dn_pieces[:len(host_pieces)] == lower_reversed_host_pieces:
+                    elif len(host_pieces) > 0 and (lower_dn_pieces[:len(host_pieces)] == lower_host_pieces or lower_dn_pieces[:len(host_pieces)] == lower_reversed_host_pieces):
                         dn = ",".join(list(reversed(dn_pieces[len(host_pieces):])) + host_pieces)
                     elif len(host_pieces) > 0:
                         dn = ",".join(list(reversed(dn_pieces)) + host_pieces)
