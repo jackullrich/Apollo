@@ -289,7 +289,7 @@ namespace Tasks
             public string Base;
             [DataMember(Name = "query")]
             public string query;
-            [DataMember(Name ="attributes")]
+            [DataMember(Name = "attributes")]
             public string[] attributes;
             [DataMember(Name = "limit")]
             public int limit;
@@ -374,7 +374,8 @@ namespace Tasks
                     .Where(x => x.Trim().StartsWith("DC=", StringComparison.OrdinalIgnoreCase))
                     .ToArray();
                 customBrowser.Host = domainPieces.Length > 0 ? string.Join(",", domainPieces) : ldapBase;
-            } else
+            }
+            else
             {
                 Domain domain = Domain.GetCurrentDomain();
                 DirectoryEntry ent = domain.GetDirectoryEntry();
@@ -387,7 +388,7 @@ namespace Tasks
 
             List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
             string filter = parameters.query;
-            if(filter == "")
+            if (filter == "")
             {
                 filter = "(&(objectclass=top)(objectclass=container))";
             }
@@ -447,7 +448,8 @@ namespace Tasks
                         searchScope: searchScope
                     );
                 }
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _agent.GetTaskManager().AddTaskResponseToQueue(CreateTaskResponse(
                 ex.Message, true, "error"));
@@ -457,7 +459,7 @@ namespace Tasks
             {
 
                 CustomBrowserEntry customBrowserEntry = new CustomBrowserEntry();
-                if(user.TryGetValue("DistinguishedName", out object dn))
+                if (user.TryGetValue("DistinguishedName", out object dn))
                 {
                     string dnString = NormalizeLdapDn(dn.ToString());
                     customBrowserEntry.DisplayPath = dnString;
@@ -475,7 +477,7 @@ namespace Tasks
                                 : item.Value);
                     bool isGroup = false;
                     bool isContainer = false;
-                    if(user.TryGetValue("objectclass", out object oc) && oc != null)
+                    if (user.TryGetValue("objectclass", out object oc) && oc != null)
                     {
                         IEnumerable<string> classes = oc is IEnumerable<string> values
                             ? values
@@ -520,7 +522,11 @@ namespace Tasks
                                 Metadata = new Dictionary<string, object>
                                 {
                                     { "ldap_type", "member_link" },
-                                    { "target_dn", memberDn }
+                                    { "cn", memberDisplayName },
+                                    { "DistinguishedName", memberDn },
+                                    { "ldap_dn", memberDn },
+                                    { "target_dn", memberDn },
+                                    { "rdn", memberFirstRdn }
                                 }
                             };
                         }).ToList();
@@ -528,7 +534,7 @@ namespace Tasks
                     customBrowser.Entries.Add(customBrowserEntry);
                 }
 
-               // Console.WriteLine(_jsonSerializer.Serialize(user));
+                // Console.WriteLine(_jsonSerializer.Serialize(user));
             }
             // Console.WriteLine(_jsonSerializer.Serialize(results));
 
