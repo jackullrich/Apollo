@@ -391,6 +391,10 @@ namespace Tasks
             {
                 filter = "(&(objectclass=top)(objectclass=container))";
             }
+            string[] enrichedAttributes = (parameters.attributes ?? new string[0])
+                .Concat(new[] { "cn", "samaccountname", "description", "member", "memberOf", "objectclass", "distinguishedname" })
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
             SearchScope searchScope = SearchScope.Subtree;
             if (string.Equals(parameters.scope, "onelevel", StringComparison.OrdinalIgnoreCase))
             {
@@ -404,13 +408,9 @@ namespace Tasks
             {
                 if (searchScope == SearchScope.OneLevel && !string.IsNullOrEmpty(ldapBase))
                 {
-                    string[] baseAttributes = (parameters.attributes ?? new string[0])
-                        .Concat(new[] { "cn", "samaccountname", "description", "member", "memberOf", "objectclass", "distinguishedname" })
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .ToArray();
                     List<Dictionary<string, object>> baseResults = query.Query(
                         filter: "(objectClass=*)",
-                        attributesToReturn: baseAttributes,
+                        attributesToReturn: enrichedAttributes,
                         limit: 1,
                         searchScope: SearchScope.Base
                     );
@@ -432,7 +432,7 @@ namespace Tasks
                     {
                         results = query.Query(
                             filter: filter,
-                            attributesToReturn: parameters.attributes,
+                            attributesToReturn: enrichedAttributes,
                             limit: parameters.limit,
                             searchScope: searchScope
                         );
@@ -442,7 +442,7 @@ namespace Tasks
                 {
                     results = query.Query(
                         filter: filter,
-                        attributesToReturn: parameters.attributes,
+                        attributesToReturn: enrichedAttributes,
                         limit: parameters.limit,
                         searchScope: searchScope
                     );
