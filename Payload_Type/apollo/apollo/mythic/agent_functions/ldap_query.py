@@ -143,9 +143,10 @@ class LdapQueryArguments(TaskArguments):
                 ])
                 rdn = (metadata.get("rdn") or "") if metadata else ""
                 if rdn and "=" in rdn:
-                    rdn_value = rdn.split("=", 1)[1].strip()
                     dn_parts = [p.strip() for p in dn.split(",") if p.strip()]
-                    dn = ",".join(rdn if p == rdn_value else p for p in dn_parts)
+                    if dn_parts and "=" not in dn_parts[0]:
+                        dn_parts[0] = rdn
+                    dn = ",".join(dn_parts)
                 logger.info(f"ldap_query resolved base={dn!r}")
                 self.add_arg("base", dn)
                 self.add_arg("query", query)
