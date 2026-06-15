@@ -464,7 +464,7 @@ namespace Tasks
                     string[] dnStringPieces = dnString.Split(',');
                     string firstRdn = dnStringPieces[0];
                     customBrowserEntry.Name = firstRdn;
-                    dnStringPieces = dnStringPieces.Skip(1).Take(dnStringPieces.Length-1).Reverse().ToArray();
+                    dnStringPieces = dnStringPieces.Skip(1).Reverse().ToArray();
                     customBrowserEntry.ParentPath = string.Join(",", dnStringPieces);
                     customBrowserEntry.Metadata = user.ToDictionary(
                         item => item.Key,
