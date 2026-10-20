@@ -454,8 +454,8 @@ namespace Process
         {
             var evasionArgs = _agent.GetProcessManager().GetStartupInfo();
 
-            // bad things happen if you're medium integrity and do ppid spoofing while under the effects of make_token
-            if (_agent.GetIdentityManager().GetOriginal().Name != _agent.GetIdentityManager().GetCurrentPrimaryIdentity().Name)
+            // Avoid PPID spoofing while a task is running under an impersonated identity.
+            if (!_agent.GetIdentityManager().IsOriginalIdentity())
             {
                 evasionArgs.ParentProcessId = System.Diagnostics.Process.GetCurrentProcess().Id;
             }
@@ -764,22 +764,26 @@ namespace Process
 
         private bool StartWithCredentials(IntPtr hToken, ApolloLogonInformation? logonInfo)
         {
+            if (_agent.GetIdentityManager().IsOriginalIdentity())
+            {
+                return StartWithCredentialsInternal(hToken, logonInfo);
+            }
+
+            // Process creation requires privileges from Apollo's primary token. Keep the
+            // supplied token as the child's identity while temporarily ending impersonation.
+            return ImpersonationScope.Run(
+                _agent.GetIdentityManager().GetOriginal(),
+                () => StartWithCredentialsInternal(hToken, logonInfo));
+        }
+
+        private bool StartWithCredentialsInternal(IntPtr hToken, ApolloLogonInformation? logonInfo)
+        {
             int dwError;
             var bRet = false;
             LogonFlags credentialLogonFlags = GetCredentialLogonFlags(logonInfo);
 
             DebugHelp.DebugWriteLine($"calling InitializeStartupEnvironment");
-            if (_agent.GetIdentityManager().GetOriginal().Name != _agent.GetIdentityManager().GetCurrentPrimaryIdentity().Name)
-            {
-                ImpersonationScope.Run(_agent.GetIdentityManager().GetOriginal(), () =>
-                {
-                    bRet = InitializeStartupEnvironment(hToken);
-                });
-            }
-            else
-            {
-                bRet = InitializeStartupEnvironment(hToken);
-            }
+            bRet = InitializeStartupEnvironment(hToken);
 
             if (!bRet)
             {
