@@ -88,10 +88,6 @@ namespace Tasks
                     {
                         errorMessage = $"Failed to duplicate token for primary: {Marshal.GetLastWin32Error()}";
                     }
-                    else
-                    {
-                        _agent.GetIdentityManager().SetPrimaryIdentity(hPrimaryToken);
-                    }
                     if (string.IsNullOrEmpty(errorMessage))
                     {
                         bRet = _pDuplicateTokenEx(
@@ -101,13 +97,14 @@ namespace Tasks
                             TokenImpersonationLevel.Impersonation,
                             2, // TokenImpersonation
                             out hImpersonationToken);
+                        if (!bRet)
+                        {
+                            errorMessage = $"Failed to duplicate token for impersonation: {Marshal.GetLastWin32Error()}";
+                        }
                     }
-                    if (!bRet)
+                    if (string.IsNullOrEmpty(errorMessage))
                     {
-                        errorMessage = $"Failed to duplicate token for impersonation: {Marshal.GetLastWin32Error()}";
-                    }
-                    else
-                    {
+                        _agent.GetIdentityManager().SetPrimaryIdentity(hPrimaryToken);
                         var old = _agent.GetIdentityManager().GetCurrentImpersonationIdentity();
                         var oldIntegrity = _agent.GetIdentityManager().GetIntegrityLevel();
                         _agent.GetIdentityManager().SetImpersonationIdentity(hImpersonationToken);
