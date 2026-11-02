@@ -250,10 +250,11 @@ namespace Tasks
         private (bool,string) LoadAppDomainModule(String[] sParams, Byte[] bMod, Byte[][] dependencies)
         {
             bool bRet = false;
+            // Use the task's effective identity, rather than the mutable global selection.
+            using WindowsIdentity impersonationIdentity = WindowsIdentity.GetCurrent();
             AppDomain isolationDomain = AppDomain.CreateDomain(Guid.NewGuid().ToString());
             try
             {
-                WindowsIdentity impersonationIdentity = _agent.GetIdentityManager().GetCurrentImpersonationIdentity();
                 isolationDomain.SetThreadPrincipal(new WindowsPrincipal(impersonationIdentity));
                 isolationDomain.SetData("str", sParams);
                 bool defaultDomain = AppDomain.CurrentDomain.IsDefaultAppDomain();
